@@ -1,0 +1,21 @@
+Package: FLFOSR
+Title: Fast Longitudinal Function-on-scalar Regression
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Thomas",
+           family = "Sun",
+           role = c("aut", "cre"),
+           email = "tomysun123@gmail.com",
+           comment = c(ORCID = "0000-0002-5385-5083"))
+Description: Ultra-efficient MCMC for longitundial functional data.
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
+Imports:
+    fda,
+    MASS,
+    mgcv,
+    spikeSlabGAM,
+    stats
+License: GPL (>= 3)
