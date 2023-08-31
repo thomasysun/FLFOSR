@@ -1,4 +1,10 @@
-# Fast longitudinal function-on-scalar regression (FLFOSR)
+# FLFOSR
 
-Paper: "Ultra-efficient MCMC for Bayesian longitudinal functional data analysis"
+Fast longitudinal function-on-scalar regression
 
+
+## Installation
+
+``` r
+devtools::install_github("thomasysun/FLFOSR")
+```

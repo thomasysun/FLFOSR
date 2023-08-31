@@ -2,18 +2,6 @@
 # Generate simulated longitudinal functional data
 #----------------------------------------------------------------------------
 
-#############
-
-# N: number of subjects
-# Mi: number of replicates of each subject
-# L: number of non-zero scalar covariates
-# Tn: total number of timepoints
-# K: number of basis functions in final resulting basis (with K-2 reparameterized P-spline functions)
-# sig_noise: observation level variance
-# sig_with: within-curve smooth variance
-# sig_bet: between-subjects smooth variance
-# sig_alpha: fixed effects variance
-
 #' Simulated Longitudinal Functional Data
 #'
 #' Generate simulated longitudinal functional data and scalar covariates.

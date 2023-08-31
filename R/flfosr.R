@@ -2,18 +2,6 @@
 # Fast longitudinal function-on-scalar regression (FLFOSR)
 #----------------------------------------------------------------------------
 
-### Y: Tn x M Matrix of functional observations,
-# Each column corresponds to one curve from a subject.
-# Each row is a measurement at a single timepoint on a common grid.
-### X: M x L+1 or N x L+1 design matrix of fixed effects
-# Should include column of 1s for the intercept
-### z: Length M vector specifying group memberships of each curve
-# e.g. if there are 20 subjects with 5 repeated measurements each, z=rep(1:20, each = 5)
-### k: number of basis functions
-### S: number of total MCMC iterations
-### S_burn: burn first # of MCMC iterations for warm-up
-### a_a, b_a, a_g, b_g, a_w, b_w: gamma hyperparameters for variance priors of alpha, gamma and omega
-
 #' Fast Longitudinal Function-On-Scalar Regression
 #'
 #' Performs MCMC estimation for Bayesian longitudinal function-on-scalar regression.
