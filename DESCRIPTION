@@ -19,3 +19,7 @@ Imports:
     spikeSlabGAM,
     stats
 License: GPL (>= 3)
+Suggests: 
+    rmarkdown,
+    knitr
+VignetteBuilder: knitr

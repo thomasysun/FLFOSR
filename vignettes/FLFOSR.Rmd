@@ -1,8 +1,25 @@
-# FLFOSR
+---
+title: "Using FLFOSR"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{my-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
 
-`FLFOSR` (Fast Longitudinal Function-on-scalar Regression) implements a highly efficient Bayesian function-on-scalar regression model for longitudinal or repeated measurements functional data.
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 6, fig.height = 4
+)
+```
 
-## Background
+
+# Background
+
+`FLFOSR` (Fast Longitudinal Function-on-scalar Regression) implements a highly efficient Bayesian function-on-scalar regression model for longitudinally or repeated measurements functional data.
+
 
 Consider a sample of $i = 1, \dots, N$ subjects where for each subject $i$ we have $j = 1, \dots, M_i$ functional observations $Y_{i,j}(\tau)$ along with some scalar variables $\boldsymbol{x}_{i,j} = \{x_{i,j,1}, \dots, x_{i,j,L}\}$. Then we can write the following regression model:
 
@@ -17,7 +34,8 @@ Additionally, we have the subject-specific functional random intercepts $\tilde{
 **Purpose**: `FLFOSR` efficiently estimates all regression terms in a fully Bayesian model using a highly optimized MCMC algorithm. This method has been demonstrated to achieve high point accuracy and accurate interval coverage while having better scalability than even Variational Bayes or Frequentist methods as $N$, $M_i$, or $L$ increases. See <https://arxiv.org/abs/2306.07168> for details.
 
 
-## Installation
+
+# Using `FLFOSR`
 
 You can install and load the package using the following lines:
 ```{r install}
@@ -26,13 +44,44 @@ You can install and load the package using the following lines:
 library(FLFOSR) 
 ```
 
-## Using `FLFOSR`
-
 
 The primary function in `FLFOSR` is `flfosr()`, which runs the model. It requires three inputs:
 
 - `Y` : the $T \times M$ matrix of functional observations, where $T$ is the total number of observed points along the domain and $M$ is the total number of curves, $M = \sum^{N}_{i=1} M_i$.
 - `X` : the matrix of scalar observations, which can be either $N \times L+1$ or $M \times L+1$. It should include a column of ones for the intercept. 
 - `z` : vector specifying group memberships of each curve. For example, if there are 20 subjects with 5 repeated measurements each, then `z=rep(1:20, each = 5)`.
+
+Let's simulate some longitudinal functional data along with some scalar covariates.
+
+
+```{r}
+simdata <- sim_lfosr_data(N = 20, Mi = 5, L = 3, Tn = 50, sig_bet = 5, sig_noise = .1, seed = 1)
+
+Y <- simdata$Y
+X <- simdata$X
+z <- simdata$z 
+```
+
+
+```{r explot, echo = FALSE}
+matplot(Y[,1:15], type = "l", col = z[1:15], lty = z[1:15], lwd = 2, main = "Example data", ylab = "Y")
+legend(30, 3, legend = c("Subj 1", "Subj 2", "Subj 3"), col = 1:3, lty = 1:3, lwd = 2)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

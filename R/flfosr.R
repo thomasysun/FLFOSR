@@ -129,7 +129,6 @@ flfosr <- function(Y, X, z, k = 10, S = 2000, S_burn = S/2,
         alpha
       }
     })
-    alpha
 
     Q_gaij <- 1/sig_ga + rep(Dk, each = N)*edG*c(Mi)
 
@@ -140,7 +139,7 @@ flfosr <- function(Y, X, z, k = 10, S = 2000, S_burn = S/2,
 
     Q_wij <- rowrep(sapply(Dk, function(x) x/sig_e + 1/sig_w), Mi)
 
-    if(Nx != N){
+    if(Nx == N){
       w <- matrix(rnorm(MM*K, (1/sig_e)*(Yk -   rowrep(X%*%alpha + ga, Mi)*rep(Dk, each = MM))*(1/Q_wij), sd = sqrt(1/Q_wij)  ), nrow = MM, ncol = K)
     }else{
       w <- matrix(rnorm(MM*K, (1/sig_e)*(Yk -   (ZX%*%alpha + rowrep(ga, Mi))*rep(Dk, each = MM))*(1/Q_wij), sd = sqrt(1/Q_wij)  ), nrow = MM, ncol = K)
