@@ -18,7 +18,12 @@
 #' * a_w, b_w: shape and rate hyperparameters for within-group variance.
 #'
 #' @return A list with the following elements:
-#' * X: the inputted design matrix
+#' * X: the inputed design matrix
+#' * B: orthogonalized basis matrix
+#' * w_post: posterior draws of curve specific random effects coefficients
+#' * ga_post: posterior draws of the subject specific random effects coefficients
+#' * alpha_post: posterior draws of the fixed effect coefficients
+#' * alphaf_post: posterior draws of the fixed effect functions
 #' @export
 #'
 #' @examples
@@ -188,10 +193,6 @@ flfosr <- function(Y, X, z, k = 10, S = 2000, S_burn = S/2,
              w_post = w_post,
              ga_post = ga_post,
              alpha_post = alpha_post,
-             sig_e_post = sig_e_post,
-             sig_alpha_post = sig_alpha_post,
-             sig_ga_post = sig_ga_post,
-             sig_w_post = sig_w_post,
              alphaf_post = alphaf_post)
 
   return(m1)

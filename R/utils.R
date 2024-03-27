@@ -37,8 +37,8 @@ rowrep <- function(X, ntimes){
 
 postf <- function(f_post, alpha = .05){
 
-  f_ci_l <- apply(f_post[,], 1, function(x) quantile(x, c(alpha/2)))
-  f_ci_u <- apply(f_post[,], 1, function(x) quantile(x, c(1 - alpha/2)))
+  f_ci_l <- apply(f_post[,], 1, function(x) stats::quantile(x, c(alpha/2)))
+  f_ci_u <- apply(f_post[,], 1, function(x) stats::quantile(x, c(1 - alpha/2)))
   f_mean <- rowMeans(f_post[,])
 
   output <- list(f_mean = f_mean,
@@ -68,7 +68,7 @@ credBands = function(sampFuns, alpha = .05){
   N = nrow(sampFuns); m = ncol(sampFuns)
 
   # Compute pointwise mean and SD of f(x):
-  Efx = colMeans(sampFuns); SDfx = apply(sampFuns, 2, sd)
+  Efx = colMeans(sampFuns); SDfx = apply(sampFuns, 2, stats::sd)
 
   # Compute standardized absolute deviation:
   Standfx = abs(sampFuns - tcrossprod(rep(1, N), Efx))/tcrossprod(rep(1, N), SDfx)
@@ -77,7 +77,7 @@ credBands = function(sampFuns, alpha = .05){
   Maxfx = apply(Standfx, 1, max)
 
   # Compute the (1-alpha) sample quantile:
-  Malpha = quantile(Maxfx, 1-alpha)
+  Malpha = stats::quantile(Maxfx, 1-alpha)
 
   # Finally, store the bands in a (m x 2) matrix of (lower, upper)
   t(cbind(Efx - Malpha*SDfx, Efx + Malpha*SDfx))

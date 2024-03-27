@@ -37,7 +37,12 @@ flfosr(
 \value{
 A list with the following elements:
 \itemize{
-\item X: the inputted design matrix
+\item X: the inputed design matrix
+\item B: orthogonalized basis matrix
+\item w_post: posterior draws of curve specific random effects coefficients
+\item ga_post: posterior draws of the subject specific random effects coefficients
+\item alpha_post: posterior draws of the fixed effect coefficients
+\item alphaf_post: posterior draws of the fixed effect functions
 }
 }
 \description{
