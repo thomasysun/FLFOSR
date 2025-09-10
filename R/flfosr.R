@@ -56,6 +56,7 @@ flfosr <- function(Y, X, z, k = 10, S = 2000, S_burn = S/2,
   Dk <- diag(crossprod(B))
   Bk <- B%*%diag(1/sqrt(Dk))
   Yk <- crossprod(Y, Bk)
+  group1 <- z
 
   Nx <- nrow(X)
 
@@ -76,7 +77,7 @@ flfosr <- function(Y, X, z, k = 10, S = 2000, S_burn = S/2,
 
   e <- 1
   alpha <- matrix(0, nrow = L+1 , K)
-  ga <- (rowsum(t(Y - Bk%*%t(ZX%*%alpha)), z)/c(Mi))%*%Bk
+  ga <- (rowsum(t(Y - Bk%*%t(ZX%*%alpha)), group1)/c(Mi))%*%Bk
   w <- t(Y - Bk%*%t(ZX%*%alpha + rowrep(ga,Mi)))%*%Bk
 
   sig_e <- .1
@@ -89,68 +90,83 @@ flfosr <- function(Y, X, z, k = 10, S = 2000, S_burn = S/2,
   w_post <- list()
   ga_post <- list()
   alpha_post <- list()
-  sig_e_post <- rep(NA, Sk)
-  sig_alpha_post <- matrix(NA, nrow = Sk, ncol = L+1)
-  sig_ga_post <- matrix(NA, nrow = Sk, ncol = 1)
-  sig_w_post <- matrix(NA, nrow = Sk, ncol = N)
+  sig_e_post <- rep(NA, S)
+  sig_alpha_post <- matrix(NA, nrow = S, ncol = L+1)
+  sig_ga_post <- matrix(NA, nrow = S, ncol = N)
+  sig_w_post <- matrix(NA, nrow = S, ncol = MM)
+
+  nog <- which(Mi == 1)
 
   progress <- floor(seq(1, S, length.out= 11))
 
-  cat(paste0("Beginning MCMC with ", Sk, " draws after burn-in\n"))
   for(s in 1:S){
-    edG <- sapply(Dk, function(x) 1/(sig_e + (x)*sig_w))
 
-    edGdF <- sapply(Dk, function(x) 1/(x*sig_ga*Mi + x*c(sig_w) + sig_e))
+    eG <- matrix(rep(1/(sig_e + sig_w), K), ncol = K)
 
-    eGh <- rep(Dk, each = MM)*rowrep(edGdF, Mi)
+    edG <- matrix(1/(sig_e + sig_w), nrow=N, ncol=K, byrow=FALSE)
 
-    l_alpha <- crossprod((ZX), Yk*eGh/rep(Dk, each = MM))
+    W <- edG^2/(c(Mi)*edG + 1/sig_ga)
 
     alpha <- sapply(1:K, function(x) {
 
-      if(L <= Nx){
+      XVWk <- rowrep(X*((edG - c(Mi)*W)[,x]), Mi)
 
-        Q_alpha <- diag(1/sig_alpha) + crossprod(ZX, ZX*eGh[,x])
+      Q_alpha <- diag(1/sig_alpha) + crossprod(XVWk, ZX)
+      l_alpha <- crossprod(XVWk, Yk[,x])
 
-        ch_Q <- chol(matrix(Q_alpha, nrow=L+1, ncol=L+1))
-        alpha <- backsolve(ch_Q,
-                           forwardsolve(t(ch_Q), l_alpha[,x]) +
-                             rnorm((L+1)))
+      ch_Q <- chol(matrix(Q_alpha, nrow=L+1, ncol=L+1))
+      alpha <- backsolve(ch_Q,
+                         # forwardsolve(t(ch_Q), l_alpha[,x]) +
+                         forwardsolve(t(ch_Q), l_alpha) +
+                           rnorm((L+1)))
 
-        alpha
+      alpha
 
-      }else{
-        u <- rnorm(L+1, 0, sqrt(sig_alpha))
-        delta <- rnorm(MM)
-
-        Phi <- ZX*sqrt(eGh[,x])
-        v = Phi%*%u + delta
-
-        pw <- solve(tcrossprod(Phi*rep(sqrt(sig_alpha), each = MM)) + diag(MM),
-                    Yk[,x]*sqrt(eGh[,x])/(Dk[x]) - v)
-        alpha <- u + sig_alpha*t(Phi)%*%pw
-
-
-        alpha
-      }
+      # if(L <= Nx){
+      #
+      #   ch_Q <- chol(matrix(Q_alpha[,x], nrow=L+1, ncol=L+1))
+      #   alpha <- backsolve(ch_Q,
+      #                      forwardsolve(t(ch_Q), l_alpha[,x]) +
+      #                        rnorm((L+1)))
+      #
+      #   alpha
+      #
+      # }else{
+      #   H <- Map('*', 1/((1/sig_ga)+sumeG[,x]), tapply(eG[,x],  group1, function(v)
+      #     if(length(v) > 1) {outer(v, v)}
+      #     else{v}))
+      #
+      #   u <- rnorm(L+1, 0, sqrt(sig_alpha))
+      #   delta <- rnorm(N)
+      #
+      #   Phi <- X*(sqrt(sumeG[,x] -  sapply(H, sum)))
+      #   v = Phi%*%u + delta
+      #
+      #   pw <- solve(tcrossprod(Phi*rep(sqrt(sig_alpha), each = N)) + diag(N),
+      #               (rowsum(Yk[,x],group1)/c(Mi))*(sqrt(sumeG[,x] -  sapply(H, sum))) - v)
+      #   alpha <- u + sig_alpha*t(Phi)%*%pw
+      #
+      #
+      #   alpha
+      # }
     })
 
-    Q_gaij <- 1/sig_ga + rep(Dk, each = N)*edG*c(Mi)
+    Q_gaij <- 1/sig_ga + edG*c(Mi)
 
-    l_gaij <- rowsum(rowrep(edG,Mi)*(Yk - ZX%*%alpha*rep(Dk, each = MM)), z)
-
+    l_gaij <- rowsum(rowrep(edG,Mi)*(Yk - ZX%*%alpha), group1)
     ga <- matrix(rnorm(N*K, (1/Q_gaij)*l_gaij, sqrt(1/Q_gaij)), nrow = N , K)
+    ga[nog,] <- 0
 
 
-    Q_wij <- rowrep(sapply(Dk, function(x) x/sig_e + 1/sig_w), Mi)
+    Q_wij <- rep(1/sig_w + 1/sig_e, Mi)
 
-    if(Nx == N){
-      w <- matrix(rnorm(MM*K, (1/sig_e)*(Yk -   rowrep(X%*%alpha + ga, Mi)*rep(Dk, each = MM))*(1/Q_wij), sd = sqrt(1/Q_wij)  ), nrow = MM, ncol = K)
+    if(Nx != N){
+      w <- matrix(rnorm(MM*K, (1/(sig_e))*(Yk -   rowrep(X%*%alpha + ga, Mi))*c(1/Q_wij), sd = sqrt(1/Q_wij)  ), nrow = MM, ncol = K)
     }else{
-      w <- matrix(rnorm(MM*K, (1/sig_e)*(Yk -   (ZX%*%alpha + rowrep(ga, Mi))*rep(Dk, each = MM))*(1/Q_wij), sd = sqrt(1/Q_wij)  ), nrow = MM, ncol = K)
+      w <- matrix(rnorm(MM*K, (1/(sig_e))*(Yk -   ZX%*%alpha - rowrep(ga, Mi))*c(1/Q_wij), sd = sqrt(1/Q_wij)  ), nrow = MM, ncol = K)
     }
 
-    sig_w <- 1/rep(rgamma(1, a_omega + MM*K/2, rate = b_omega + w^2/2), N)
+    sig_w <- 1/rgamma(N,  a_omega + b_omega + MM*K/2, rate = w^2/2)
 
     sig_ga <- 1/rgamma(1, a_ga + N*K/2, rate = b_ga + sum(((ga))^2)/2)
 
@@ -160,11 +176,12 @@ flfosr <- function(Y, X, z, k = 10, S = 2000, S_burn = S/2,
       sig_e <- 1/rgamma(1, Tn*MM/2, rate = sum((Y - tcrossprod(B, (w + rowrep((X%*%alpha + ga), Mi)) ))^2)/2)
     }else{
       if(Nx == N){
-        sig_e <- 1/rgamma(1, Tn*MM/2, rate = sum((Y - tcrossprod(B, (w +  rowrep(X%*%alpha + ga, Mi)) ))^2)/2)
+        sig_e <- 1/rgamma(1, Tn*MM/2, rate = sum((Y - tcrossprod(Bk, (w +  rowrep(X%*%alpha + ga, Mi)) ))^2)/2)
       }else{
-        sig_e <- 1/rgamma(1, Tn*MM/2, rate = sum((Y - tcrossprod(B, (w +  ZX%*%alpha + rowrep(ga, Mi)) ))^2)/2)
+        sig_e <- 1/rgamma(1, Tn*MM/2, rate = sum((Y - tcrossprod(Bk, (w +  ZX%*%alpha + rowrep(ga, Mi)) ))^2)/2)
       }
     }
+
     if(s > S_burn){
       sk <- s - S_burn
       w_post[[sk]] <- w
@@ -185,11 +202,11 @@ flfosr <- function(Y, X, z, k = 10, S = 2000, S_burn = S/2,
   #store MCMC draws of fixed effects functions
   alphaf_post <- list()
   for(i in 1:(L+1)){
-    alphaf_post[[i]] <- (B)%*%t(do.call(rbind, lapply(alpha_post, function(x) x[i,]))[,])
+    alphaf_post[[i]] <- (Bk)%*%t(do.call(rbind, lapply(alpha_post, function(x) x[i,]))[,])
   }
 
   m1 <- list(X = X,
-             B = B,
+             B = Bk,
              w_post = w_post,
              ga_post = ga_post,
              alpha_post = alpha_post,
