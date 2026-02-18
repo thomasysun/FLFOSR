@@ -92,8 +92,8 @@ flfosr <- function(Y, X, z, k = 10, S = 2000, S_burn = S/2,
   alpha_post <- list()
   sig_e_post <- rep(NA, S)
   sig_alpha_post <- matrix(NA, nrow = S, ncol = L+1)
-  sig_ga_post <- matrix(NA, nrow = S, ncol = N)
-  sig_w_post <- matrix(NA, nrow = S, ncol = MM)
+  sig_ga_post <- rep(NA, S)
+  sig_w_post <- matrix(NA, nrow = S, ncol = N)
 
   nog <- which(Mi == 1)
 
@@ -101,26 +101,57 @@ flfosr <- function(Y, X, z, k = 10, S = 2000, S_burn = S/2,
 
   for(s in 1:S){
 
-    eG <- matrix(rep(1/(sig_e + sig_w), K), ncol = K)
+    #eG <- matrix(rep(1/(sig_e + sig_w), K), ncol = K)
 
     edG <- matrix(1/(sig_e + sig_w), nrow=N, ncol=K, byrow=FALSE)
 
     W <- edG^2/(c(Mi)*edG + 1/sig_ga)
 
+    VWk <- edG - c(Mi)*W
+
     alpha <- sapply(1:K, function(x) {
 
-      XVWk <- rowrep(X*((edG - c(Mi)*W)[,x]), Mi)
+      if(L <= MM){
 
-      Q_alpha <- diag(1/sig_alpha) + crossprod(XVWk, ZX)
-      l_alpha <- crossprod(XVWk, Yk[,x])
+        XVWk <- rowrep(X*(VWk[,x]), Mi)
 
-      ch_Q <- chol(matrix(Q_alpha, nrow=L+1, ncol=L+1))
-      alpha <- backsolve(ch_Q,
-                         # forwardsolve(t(ch_Q), l_alpha[,x]) +
-                         forwardsolve(t(ch_Q), l_alpha) +
-                           rnorm((L+1)))
+        Q_alpha <- diag(1/sig_alpha) + crossprod(XVWk, ZX)
+        l_alpha <- crossprod(XVWk, Yk[,x])
 
-      alpha
+        ch_Q <- chol(matrix(Q_alpha, nrow=L+1, ncol=L+1))
+
+        alpha <- backsolve(ch_Q,
+                           # forwardsolve(t(ch_Q), l_alpha[,x]) +
+                           forwardsolve(t(ch_Q), l_alpha) +
+                             rnorm((L+1)))
+
+        alpha
+
+      }else{
+
+        # u <- rnorm(L+1, 0, sqrt(sig_alpha))
+        # delta <- rnorm(N)
+        # Phi <- X*sqrt(VWk[,x])
+        # v = Phi%*%u + delta
+        #
+        # pw <- solve(tcrossprod(Phi*rep(sqrt(sig_alpha), each = N)) + diag(N),
+        #          (rowsum(Yk[,x],group1)/c(Mi))*sqrt(VWk[,x]) - v)
+        # alpha <- u + sig_alpha*t(Phi)%*%pw
+
+
+        u <- rnorm(L+1, 0, sqrt(sig_alpha))
+        delta <- rnorm(MM)
+        Phi <- rowrep(X*sqrt(VWk[,x]), Mi)
+        v = Phi%*%u + delta
+
+        pw <- solve(tcrossprod(Phi*rep(sqrt(sig_alpha), each = MM)) + diag(MM),
+                    Yk[,x]*rep(sqrt(VWk[,x]), Mi) - v)
+        alpha <- u + sig_alpha*t(Phi)%*%pw
+
+
+        alpha
+
+      }
 
       # if(L <= Nx){
       #
